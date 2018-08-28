@@ -1,0 +1,9 @@
+[package]
+name = "backup-duplicity"
+version = "0.1.0"
+authors = ["Vincent Tavernier <vince.tavernier@gmail.com>"]
+
+[dependencies]
+walkdir = "2"
+getopts = "0.2"
+xattr = "0.2"
