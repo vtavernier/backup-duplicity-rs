@@ -41,7 +41,8 @@ fn process(root: &str, key: &str, target: &str, force_full: bool) {
         }
     }
 
-    Command::new("duplicity")
+    Command::new("/usr/bin/python2.7")
+        .arg("/usr/local/bin/duplicity")
         .arg(if force_full { "incremental" } else { "full" })
         .arg("-v8")
         .arg("--use-agent")
