@@ -45,6 +45,8 @@ fn process(root: &str, key: &str, target: &str, force_full: bool) {
         .arg("/usr/local/bin/duplicity")
         .arg(if force_full { "incremental" } else { "full" })
         .arg("-v8")
+        .arg("--archive-dir")
+        .arg("/var/backups/duplicity")
         .arg("--use-agent")
         .arg("--encrypt-sign-key")
         .arg(key)
