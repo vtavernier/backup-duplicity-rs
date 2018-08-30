@@ -108,6 +108,9 @@ fn main() {
     match Capabilities::from_current_proc() {
         Ok(mut capabilities) => {
             capabilities.update(&[Capability::CAP_DAC_READ_SEARCH], Flag::Inheritable, true);
+            if let Err(error) = capabilities.apply() {
+                eprintln!("Error applying capabilities: {:?}", error);
+            }
         },
         Err(error) => eprintln!("Error fetching capabilities: {:?}", error)
     }
