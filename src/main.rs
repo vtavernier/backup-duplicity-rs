@@ -1,3 +1,4 @@
+extern crate capabilities;
 extern crate getopts;
 extern crate walkdir;
 extern crate xattr;
@@ -8,6 +9,7 @@ use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Command;
 
+use capabilities::{Flag, Capabilities, Capability};
 use getopts::Options;
 use walkdir::WalkDir;
 
@@ -99,6 +101,14 @@ fn main() {
     if target.is_none() {
         print_usage(&program, opts);
         return;
+    }
+
+    // Extend inheritable capability set
+    match Capabilities::from_current_proc() {
+        Ok(mut capabilities) => {
+            capabilities.update(&[Capability::CAP_DAC_READ_SEARCH], Flag::Inheritable, true);
+        },
+        Err(error) => eprintln!("Error fetching capabilities: {:?}", error)
     }
 
     process(
