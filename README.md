@@ -4,17 +4,19 @@ backup-duplicity-rs is a binary that runs duplicity with arguments corresponding
 to directories that have been found under a common root, with the xattr
 `user.backup = 1`.
 
-The resulting binary can have added capabilities in order to run backups as a
-standard user, while still being able to backup the whole filesystem.
+Example systemd unit to run a backup with the rights to read any file:
 
-```
-~ # setcap cap_dac_read_search=ep path/to/backup-duplicity
-~ # setcap cap_dac_read_search=i path/to/duplicity-python
-```
-
-Note that this is possible since this program simply execs the duplicity binary.
-This has security implications if you cannot ensure the integrity of the
-duplicity installation.
+	[Unit]
+	Description=Backup tagged directories using Duplicity
+	After=network.target
+	Requires=network.target
+	
+	[Service]
+	ExecStart=/usr/local/bin/backup-duplicity -r /backup-root -k GPG-KEY-ID -t some://backup-url
+	CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+	
+	[Install]
+	WantedBy=multi-user.target
 
 ## Usage
 

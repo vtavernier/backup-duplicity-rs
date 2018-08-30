@@ -1,4 +1,3 @@
-extern crate capabilities;
 extern crate getopts;
 extern crate walkdir;
 extern crate xattr;
@@ -9,7 +8,6 @@ use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Command;
 
-use capabilities::{Flag, Capabilities, Capability};
 use getopts::Options;
 use walkdir::WalkDir;
 
@@ -41,10 +39,9 @@ fn process(root: &str, key: &str, target: &str, force_full: bool) {
         }
     }
 
-    Command::new("/usr/bin/python2.7")
-        .arg("/usr/local/bin/duplicity")
+    Command::new("duplicity")
         .arg(if force_full { "incremental" } else { "full" })
-        .arg("-v8")
+        .arg("-v4")
         .arg("--archive-dir")
         .arg("/var/backups/duplicity")
         .arg("--use-agent")
@@ -104,17 +101,6 @@ fn main() {
     if target.is_none() {
         print_usage(&program, opts);
         return;
-    }
-
-    // Extend inheritable capability set
-    match Capabilities::from_current_proc() {
-        Ok(mut capabilities) => {
-            capabilities.update(&[Capability::CAP_DAC_READ_SEARCH], Flag::Inheritable, true);
-            if let Err(error) = capabilities.apply() {
-                eprintln!("Error applying capabilities: {:?}", error);
-            }
-        },
-        Err(error) => eprintln!("Error fetching capabilities: {:?}", error)
     }
 
     process(
