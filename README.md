@@ -8,7 +8,8 @@ The resulting binary can have added capabilities in order to run backups as a
 standard user, while still being able to backup the whole filesystem.
 
 ```
-~ # setcap cap_dac_read_search=iep path/to/backup-duplicity
+~ # setcap cap_dac_read_search=ep path/to/backup-duplicity
+~ # setcap cap_dac_read_search=i path/to/duplicity-python
 ```
 
 Note that this is possible since this program simply execs the duplicity binary.
