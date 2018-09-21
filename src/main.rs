@@ -23,7 +23,6 @@ fn find_paths(root: &str) -> Vec<PathBuf> {
                         if let Ok(Some(attr)) = xattr::get(e.path(), "user.backup") {
                             if attr == b"1" {
                                 backup_dirs.push(e.path().into());
-                                println!("{}", e.path().to_string_lossy());
                             }
                         }
                     }
