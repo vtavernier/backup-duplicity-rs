@@ -12,7 +12,7 @@ Example systemd unit to run a backup with the rights to read any file:
 	Requires=network.target
 	
 	[Service]
-	ExecStart=/usr/local/bin/backup-wrapper -r /backup-root -k GPG-KEY-ID -t some://backup-url
+	ExecStart=/usr/local/bin/backup-wrapper duplicity -r /backup-root -k GPG-KEY-ID -t some://backup-url full
 	CapabilityBoundingSet=CAP_DAC_READ_SEARCH
 	
 	[Install]
@@ -21,7 +21,9 @@ Example systemd unit to run a backup with the rights to read any file:
 ## Usage
 
 ```
-~ $ backup-wrapper -f -r /backup-root -k GPG-KEY-ID -t some://backup-url
+~ $ backup-wrapper duplicity -r /backup-root -k GPG-KEY-ID -t some://backup-url full
+~ $ backup-wrapper duplicity -r /backup-root -k GPG-KEY-ID -t some://backup-url incremental
+~ $ backup-wrapper restic -r /backup-root -p PASSWORD-FILE backup
 ```
 
 ## License
