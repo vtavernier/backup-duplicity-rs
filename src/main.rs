@@ -66,6 +66,12 @@ fn process_duplicity(root: &str, key: &str, target: &str, force_full: bool) {
         .exec();
 }
 
+fn process_list(root: &str) {
+    for path in find_paths(root) {
+        println!("{}", OsString::from(path).to_string_lossy());
+    }
+}
+
 #[derive(Debug, Fail)]
 enum BackupWrapperError {
     #[fail(display = "The backup root parameter is required but it was not provided")]
@@ -107,6 +113,8 @@ fn main() -> Result<(), BackupWrapperError> {
                          .help("Force full backup")))
         .subcommand(SubCommand::with_name("restic")
                     .about("Performs a backup using the restic tool"))
+        .subcommand(SubCommand::with_name("list")
+                    .about("Show the list of directories to be included in the backup"))
         .get_matches();
 
     if let Some(matches) = app_matches.subcommand_matches("duplicity") {
@@ -128,6 +136,14 @@ fn main() -> Result<(), BackupWrapperError> {
         }
     } else if let Some(_matches) = app_matches.subcommand_matches("restic") {
         unimplemented!()
+    } else if let Some(_matches) = app_matches.subcommand_matches("list") {
+        if let Some(root) = app_matches.value_of("root") {
+            process_list(root);
+
+            Ok(())
+        } else {
+            Err(BackupWrapperError::BackupRootMissing)
+        }
     } else {
         Err(BackupWrapperError::UnknownCommand)
     }
