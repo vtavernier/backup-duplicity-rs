@@ -6,9 +6,10 @@ extern crate xattr;
 
 use clap::{Arg, App, SubCommand};
 
-mod fs;
 mod duplicity;
+mod fs;
 mod list;
+mod restic;
 
 #[derive(Debug, Fail)]
 enum BackupWrapperError {
@@ -50,7 +51,25 @@ fn main() -> Result<(), BackupWrapperError> {
                     .subcommand(SubCommand::with_name("clean")
                                 .about("Clean old backups")))
         .subcommand(SubCommand::with_name("restic")
-                    .about("Performs a backup using the restic tool"))
+                    .about("Performs a backup using the restic tool")
+                    .arg(Arg::with_name("root")
+                         .short("r")
+                         .long("root")
+                         .value_name("DIRECTORY")
+                         .help("Set root directory for backup")
+                         .takes_value(true)
+                         .required(true))
+                    .arg(Arg::with_name("password_file")
+                         .short("p")
+                         .long("password-file")
+                         .value_name("PASSWORD_FILE")
+                         .help("Password file for restic repository")
+                         .takes_value(true)
+                         .required(true))
+                    .subcommand(SubCommand::with_name("backup")
+                                .about("Perform a snapshot"))
+                    .subcommand(SubCommand::with_name("clean")
+                                .about("Clean old backups")))
         .subcommand(SubCommand::with_name("list")
                     .about("Show the list of directories to be included in the backup")
                     .arg(Arg::with_name("root")
@@ -83,8 +102,24 @@ fn main() -> Result<(), BackupWrapperError> {
         } else {
             Err(BackupWrapperError::UnknownCommand)
         }
-    } else if let Some(_matches) = app_matches.subcommand_matches("restic") {
-        unimplemented!()
+    } else if let Some(matches) = app_matches.subcommand_matches("restic") {
+        let root = matches.value_of("root").unwrap();
+        let password_file = matches.value_of("password_file").unwrap();
+        let mode = if let Some(_matches) = matches.subcommand_matches("backup") {
+            Some("backup")
+        } else if let Some(_matches) = matches.subcommand_matches("clean") {
+            Some("clean")
+        } else {
+            None
+        };
+
+        if let Some(mode) = mode {
+            restic::process(root, password_file, mode);
+
+            Ok(())
+        } else {
+            Err(BackupWrapperError::UnknownCommand)
+        }
     } else if let Some(matches) = app_matches.subcommand_matches("list") {
         list::process(matches.value_of("root").unwrap());
 
