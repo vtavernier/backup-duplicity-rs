@@ -1,9 +1,10 @@
 [package]
-name = "backup-duplicity"
+name = "backup-wrapper"
 version = "0.1.0"
 authors = ["Vincent Tavernier <vince.tavernier@gmail.com>"]
 
 [dependencies]
 walkdir = "2"
-getopts = "0.2"
+clap = { version = "2", default-features = false }
 xattr = "0.2"
+failure = "0.1.2"

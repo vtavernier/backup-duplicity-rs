@@ -1,18 +1,18 @@
-# backup-duplicity-rs
+# backup-wrapper-rs
 
-backup-duplicity-rs is a binary that runs duplicity with arguments corresponding
-to directories that have been found under a common root, with the xattr
-`user.backup = 1`.
+backup-wrapper-rs is a binary that runs the selected backup backend with
+arguments corresponding to directories that have been found under a common
+root, with the xattr `user.backup = 1`.
 
 Example systemd unit to run a backup with the rights to read any file:
 
 	[Unit]
-	Description=Backup tagged directories using Duplicity
+	Description=Backup tagged directories using backup-wrapper
 	After=network.target
 	Requires=network.target
 	
 	[Service]
-	ExecStart=/usr/local/bin/backup-duplicity -r /backup-root -k GPG-KEY-ID -t some://backup-url
+	ExecStart=/usr/local/bin/backup-wrapper -r /backup-root -k GPG-KEY-ID -t some://backup-url
 	CapabilityBoundingSet=CAP_DAC_READ_SEARCH
 	
 	[Install]
@@ -21,7 +21,7 @@ Example systemd unit to run a backup with the rights to read any file:
 ## Usage
 
 ```
-~ $ backup-duplicity -f -r /backup-root -k GPG-KEY-ID -t some://backup-url
+~ $ backup-wrapper -f -r /backup-root -k GPG-KEY-ID -t some://backup-url
 ```
 
 ## License

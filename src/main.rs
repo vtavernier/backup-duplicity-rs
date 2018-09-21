@@ -1,17 +1,18 @@
-extern crate getopts;
+#[macro_use]
+extern crate failure;
+extern crate clap;
 extern crate walkdir;
 extern crate xattr;
 
-use std::env;
 use std::ffi::OsString;
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Command;
 
-use getopts::Options;
+use clap::{Arg, App, SubCommand};
 use walkdir::WalkDir;
 
-fn process(root: &str, key: &str, target: &str, force_full: bool) {
+fn find_paths(root: &str) -> Vec<PathBuf> {
     let mut backup_dirs: Vec<PathBuf> = Vec::new();
 
     for entry in WalkDir::new(root).max_depth(2) {
@@ -39,6 +40,12 @@ fn process(root: &str, key: &str, target: &str, force_full: bool) {
         }
     }
 
+    backup_dirs
+}
+
+fn process_duplicity(root: &str, key: &str, target: &str, force_full: bool) {
+    let backup_dirs = find_paths(root);
+
     Command::new("duplicity")
         .arg(if force_full { "incremental" } else { "full" })
         .arg("-v4")
@@ -59,54 +66,69 @@ fn process(root: &str, key: &str, target: &str, force_full: bool) {
         .exec();
 }
 
-fn print_usage(program: &str, opts: Options) {
-    let brief = format!("Usage: {} [options]", program);
-    print!("{}", opts.usage(&brief));
+#[derive(Debug, Fail)]
+enum BackupWrapperError {
+    #[fail(display = "The backup root parameter is required but it was not provided")]
+    BackupRootMissing,
+    #[fail(display = "The backup target parameter is required but it was not provided")]
+    BackupTargetMissing,
+    #[fail(display = "Unknown command, see --help")]
+    UnknownCommand,
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    let program = args[0].clone();
+fn main() -> Result<(), BackupWrapperError> {
+    let app_matches = App::new("backup-wrapper")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .arg(Arg::with_name("root")
+             .short("r")
+             .long("root")
+             .value_name("DIRECTORY")
+             .help("Set root directory for backup")
+             .takes_value(true))
+        .arg(Arg::with_name("target")
+             .short("t")
+             .long("target")
+             .value_name("TARGET")
+             .help("Set backup target")
+             .takes_value(true))
+        .subcommand(SubCommand::with_name("duplicity")
+                    .about("Performs a backup using the duplicity tool")
+                    .arg(Arg::with_name("key")
+                         .short("k")
+                         .long("key")
+                         .value_name("KEY")
+                         .help("Encryption key fingerprint")
+                         .takes_value(true)
+                         .required(true))
+                    .arg(Arg::with_name("full")
+                         .short("f")
+                         .long("full")
+                         .help("Force full backup")))
+        .subcommand(SubCommand::with_name("restic")
+                    .about("Performs a backup using the restic tool"))
+        .get_matches();
 
-    let mut opts = Options::new();
-    opts.optopt("r", "", "set root directory for backup", "ROOT");
-    opts.optopt("k", "", "set encryption key for duplicity", "KEY");
-    opts.optopt("t", "", "set target for duplicity", "TARGET");
-    opts.optflag("f", "full", "force full backup");
-    opts.optflag("h", "help", "print this help menu");
+    if let Some(matches) = app_matches.subcommand_matches("duplicity") {
+        if let Some(root) = app_matches.value_of("root") {
+            if let Some(target) = app_matches.value_of("target") {
+                process_duplicity(
+                    root,
+                    matches.value_of("key").unwrap(),
+                    target,
+                    matches.is_present("full")
+                );
 
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => m,
-        Err(f) => panic!(f.to_string()),
-    };
-
-    if matches.opt_present("h") {
-        print_usage(&program, opts);
-        return;
+                Ok(())
+            } else {
+                Err(BackupWrapperError::BackupTargetMissing)
+            }
+        } else {
+            Err(BackupWrapperError::BackupRootMissing)
+        }
+    } else if let Some(_matches) = app_matches.subcommand_matches("restic") {
+        unimplemented!()
+    } else {
+        Err(BackupWrapperError::UnknownCommand)
     }
-
-    let root = matches.opt_str("r");
-    if root.is_none() {
-        print_usage(&program, opts);
-        return;
-    }
-
-    let key = matches.opt_str("k");
-    if key.is_none() {
-        print_usage(&program, opts);
-        return;
-    }
-
-    let target = matches.opt_str("t");
-    if target.is_none() {
-        print_usage(&program, opts);
-        return;
-    }
-
-    process(
-        &root.unwrap(),
-        &key.unwrap(),
-        &target.unwrap(),
-        matches.opt_present("f"),
-    );
 }
