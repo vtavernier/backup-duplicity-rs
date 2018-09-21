@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use xattr;
 use walkdir::WalkDir;
 
-pub fn find_paths(root: &str) -> Vec<PathBuf> {
+pub fn find_paths(root: &str, attr_filter: &str) -> Vec<PathBuf> {
     let mut backup_dirs: Vec<PathBuf> = Vec::new();
 
     for entry in WalkDir::new(root).max_depth(2) {
@@ -12,7 +12,7 @@ pub fn find_paths(root: &str) -> Vec<PathBuf> {
                 Ok(metadata) => {
                     if metadata.is_dir() {
                         if let Ok(Some(attr)) = xattr::get(e.path(), "user.backup") {
-                            if attr == b"1" {
+                            if String::from_utf8_lossy(&attr) == attr_filter {
                                 backup_dirs.push(e.path().into());
                             }
                         }

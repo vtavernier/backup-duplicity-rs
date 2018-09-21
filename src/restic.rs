@@ -3,7 +3,7 @@ use fs::find_paths;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-pub fn process(root: &str, password_file: &str, mode: &str) {
+pub fn process(level: &str, root: &str, password_file: &str, mode: &str) {
     match mode {
         "clean" => {
             Command::new("restic")
@@ -18,7 +18,7 @@ pub fn process(root: &str, password_file: &str, mode: &str) {
                 .exec();
         },
         "backup" => {
-            let backup_dirs = find_paths(root);
+            let backup_dirs = find_paths(root, level);
 
             Command::new("restic")
                 .arg("-p")

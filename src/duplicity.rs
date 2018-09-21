@@ -4,7 +4,7 @@ use std::ffi::OsString;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-pub fn process(root: &str, key: &str, target: &str, mode: &str) {
+pub fn process(level: &str, root: &str, key: &str, target: &str, mode: &str) {
     match mode {
         "clean" => {
             Command::new("duplicity")
@@ -14,7 +14,7 @@ pub fn process(root: &str, key: &str, target: &str, mode: &str) {
                 .exec();
         },
         "incremental" | "full" => {
-            let backup_dirs = find_paths(root);
+            let backup_dirs = find_paths(root, level);
 
             Command::new("duplicity")
                 .arg(mode)

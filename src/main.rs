@@ -21,6 +21,13 @@ fn main() -> Result<(), BackupWrapperError> {
     let app_matches = App::new("backup-wrapper")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
+        .arg(Arg::with_name("level")
+             .short("l")
+             .long("level")
+             .value_name("LEVEL")
+             .takes_value(true)
+             .default_value("1")
+             .required(true))
         .subcommand(SubCommand::with_name("duplicity")
                     .about("Performs a backup using the duplicity tool")
                     .arg(Arg::with_name("root")
@@ -81,6 +88,8 @@ fn main() -> Result<(), BackupWrapperError> {
                          .required(true)))
         .get_matches();
 
+    let level = app_matches.value_of("level").unwrap();
+
     if let Some(matches) = app_matches.subcommand_matches("duplicity") {
         let root = matches.value_of("root").unwrap();
         let key = matches.value_of("key").unwrap();
@@ -96,7 +105,7 @@ fn main() -> Result<(), BackupWrapperError> {
         };
 
         if let Some(mode) = mode {
-            duplicity::process(root, key, target, mode);
+            duplicity::process(level, root, key, target, mode);
 
             Ok(())
         } else {
@@ -114,14 +123,14 @@ fn main() -> Result<(), BackupWrapperError> {
         };
 
         if let Some(mode) = mode {
-            restic::process(root, password_file, mode);
+            restic::process(level, root, password_file, mode);
 
             Ok(())
         } else {
             Err(BackupWrapperError::UnknownCommand)
         }
     } else if let Some(matches) = app_matches.subcommand_matches("list") {
-        list::process(matches.value_of("root").unwrap());
+        list::process(level, matches.value_of("root").unwrap());
 
         Ok(())
     } else {
